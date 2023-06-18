@@ -1,93 +1,217 @@
 openapi: 3.0.1
 info:
-  title: TODO Plugin
-  description: A plugin that allows the user to create and manage a TODO list using ChatGPT. If you do not know the user's username, ask them first before making queries to the plugin. Otherwise, use the username "global".
+  title: File Editor Plugin
+  description: |
+    description: A plugin that allows the user to read and edit files for projects.
+    It can list, read, write and delete files for a specific project.
+    Edits are made by sending start+end line and content change.
+    Be wary of the line number difference when doing multiple edits.
+    File lines shouldn't be shown unless explicitly requested.
+    Multiple files can be interacted with, individually.
+    If a file is edited, it should be reloaded to check the edits and apply corrections if needed.
+    The file contents should be shown in a text editor.
+    If you do not know the name of the project, ask the user to select it from a list.
   version: 'v1'
 servers:
   - url: http://localhost:5003
 paths:
-  /todos/{username}:
+  /{project}/files:
     get:
-      operationId: getTodos
-      summary: Get the list of todos
+      operationId: getFiles
+      summary: Get the list of files
       parameters:
-      - in: path
-        name: username
-        schema:
+        - in: path
+          name: project
+          schema:
             type: string
-        required: true
-        description: The name of the user.
+          required: true
+          description: The name of the project.
       responses:
         "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/getTodosResponse'
+                $ref: '#/components/schemas/getFilesResponse'
+  /{project}/file/read:
     post:
-      operationId: addTodo
-      summary: Add a todo to the list
+      operationId: getFile
+      summary: Get information about a file and its contents
       parameters:
-      - in: path
-        name: username
-        schema:
+        - in: path
+          name: project
+          schema:
             type: string
-        required: true
-        description: The name of the user.
+          required: true
+          description: The name of the project.
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/addTodoRequest'
+              $ref: '#/components/schemas/getFileRequest'
       responses:
         "200":
           description: OK
-    delete:
-      operationId: deleteTodo
-      summary: Delete a todo from the list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/getFileResponse'
+
+  /{project}/file/lines:
+    post:
+      operationId: editFileLines
+      summary: Edit a range of lines in a file. The edits must be validated by the user before being applied. The file must be reloaded after the edits are applied to check them and apply corrections if needed.
       parameters:
-      - in: path
-        name: username
-        schema:
+        - in: path
+          name: project
+          schema:
             type: string
-        required: true
-        description: The name of the user.
+          required: true
+          description: The name of the project.
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/deleteTodoRequest'
+              $ref: '#/components/schemas/editFileRequest'
+      responses:
+        '200':
+          description: File successfully edited
+        '400':
+          description: Invalid input
+        '404':
+          description: File not found
+#  /{project}/file/patch:
+#    post:
+#      operationId: patchFile
+#      summary: Patch a file
+#      parameters:
+#        - in: path
+#          name: project
+#          schema:
+#            type: string
+#          required: true
+#          description: The name of the project.
+#      requestBody:
+#        required: true
+#        content:
+#          application/json:
+#            schema:
+#              $ref: '#/components/schemas/patchFileRequest'
+#      responses:
+#        '200':
+#          description: File successfully edited
+#        '400':
+#          description: Invalid input
+#        '404':
+#          description: File not found
+  /{project}/file/write:
+    post:
+      operationId: setFileContents
+      summary: Set the contents of a file
+      parameters:
+        - in: path
+          name: project
+          schema:
+            type: string
+          required: true
+          description: The name of the project.
+        - in: path
+          name: filename
+          schema:
+            type: string
+          required: true
+          description: The name of the file.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/setFileContentsRequest'
       responses:
         "200":
           description: OK
 
 components:
   schemas:
-    getTodosResponse:
+    getFilesResponse:
       type: object
       properties:
-        todos:
+        files:
           type: array
           items:
             type: string
-          description: The list of todos.
-    addTodoRequest:
+          description: The list of files.
+
+    getFileRequest:
       type: object
       required:
-      - todo
+        - filename
       properties:
-        todo:
+        filename:
           type: string
-          description: The todo to add to the list.
-          required: true
-    deleteTodoRequest:
+          description: The name of the file to get.
+
+    getFileResponse:
+      type: object
+      properties:
+        full_path:
+          type: string
+          description: The full path of the file.
+        last_modified:
+          type: string
+          description: The last modified date of the file.
+        created:
+          type: string
+          description: The creation date of the file.
+        contents:
+          type: array
+          description: 'The contents of the file, each line is prepended with a line number in the format of "line_number: line_content".'
+          items:
+            type: string
+
+    editFileRequest:
       type: object
       required:
-      - todo_idx
+        - filename
+        - first_line
+        - last_line
+        - content
       properties:
-        todo_idx:
+        filename:
+          type: string
+          description: The name of the file to edit.
+        first_line:
           type: integer
-          description: The index of the todo to delete.
-          required: true
+          description: The first line to edit.
+        last_line:
+          type: integer
+          description: The last line to edit.
+        content:
+          type: array
+          description: The content to replace the lines with.
+          items:
+            type: string
+
+    patchFileRequest:
+      type: object
+      required:
+        - filename
+        - patch
+      properties:
+        filename:
+          type: string
+          description: The name of the file to patch.
+        patch:
+          type: string
+          description: The patch to apply to the file.
+
+    setFileContentsRequest:
+      type: object
+      required:
+        - contents
+      properties:
+        contents:
+          type: string
+          description: The contents of the file.

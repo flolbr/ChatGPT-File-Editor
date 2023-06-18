@@ -1,9 +1,10 @@
 {
     "schema_version": "v1",
-    "name_for_human": "TODO List (no auth)",
-    "name_for_model": "todo",
-    "description_for_human": "Manage your TODO list. You can add, remove and view your TODOs.",
-    "description_for_model": "Plugin for managing a TODO list, you can add, remove and view your TODOs.",
+    "name_for_human": "File Editor (no auth)",
+    "name_for_model": "file_editor",
+    "description_for_human": "Plugin for reading and editing files for projects.",
+    "description_for_model": "Plugin for reading and editing files for projects. It can list, read, write and delete files for a specific project.",
+
     "auth": {
       "type": "none"
     },
