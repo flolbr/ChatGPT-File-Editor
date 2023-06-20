@@ -2,23 +2,22 @@ openapi: 3.0.1
 info:
   title: File Editor Plugin
   description: |
-    description: A plugin that allows the user to read and edit files for projects.
+    A plugin that allows the user to read and edit files for projects.
     It can list, read, write and delete files for a specific project.
-    Edits are made by sending start+end line and content change.
-    Be wary of the line number difference when doing multiple edits.
+    Edits are made by replacing the contents of the file.
     File lines shouldn't be shown unless explicitly requested.
     Multiple files can be interacted with, individually.
     If a file is edited, it should be reloaded to check the edits and apply corrections if needed.
     The file contents should be shown in a text editor.
     If you do not know the name of the project, ask the user to select it from a list.
-  version: 'v1'
+  version: 'v2'
 servers:
   - url: http://localhost:5003
 paths:
-  /{project}/files:
+  /projects/{project}/files:
     get:
       operationId: getFiles
-      summary: Get the list of files
+      summary: Get the list of files, url encoded.
       parameters:
         - in: path
           name: project
@@ -26,6 +25,24 @@ paths:
             type: string
           required: true
           description: The name of the project.
+        - in: query
+          name: path
+          schema:
+            type: string
+          required: false
+          description: The path to the directory to list.
+        - in: query
+          name: recursive
+          schema:
+            type: boolean
+          required: false
+          description: Whether to list files recursively.
+        - in: query
+          name: query
+          schema:
+            type: string
+          required: false
+          description: The query to search for, as a glob pattern.
       responses:
         "200":
           description: OK
@@ -33,8 +50,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/getFilesResponse'
-  /{project}/file/read:
-    post:
+
+  /projects/{project}/file:
+    get:
       operationId: getFile
       summary: Get information about a file and its contents
       parameters:
@@ -44,12 +62,12 @@ paths:
             type: string
           required: true
           description: The name of the project.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/getFileRequest'
+        - in: query
+          name: filename
+          schema:
+            type: string
+          required: true
+          description: The name of the file.
       responses:
         "200":
           description: OK
@@ -58,55 +76,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/getFileResponse'
 
-  /{project}/file/lines:
-    post:
-      operationId: editFileLines
-      summary: Edit a range of lines in a file. The edits must be validated by the user before being applied. The file must be reloaded after the edits are applied to check them and apply corrections if needed.
-      parameters:
-        - in: path
-          name: project
-          schema:
-            type: string
-          required: true
-          description: The name of the project.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/editFileRequest'
-      responses:
-        '200':
-          description: File successfully edited
-        '400':
-          description: Invalid input
-        '404':
-          description: File not found
-#  /{project}/file/patch:
-#    post:
-#      operationId: patchFile
-#      summary: Patch a file
-#      parameters:
-#        - in: path
-#          name: project
-#          schema:
-#            type: string
-#          required: true
-#          description: The name of the project.
-#      requestBody:
-#        required: true
-#        content:
-#          application/json:
-#            schema:
-#              $ref: '#/components/schemas/patchFileRequest'
-#      responses:
-#        '200':
-#          description: File successfully edited
-#        '400':
-#          description: Invalid input
-#        '404':
-#          description: File not found
-  /{project}/file/write:
     post:
       operationId: setFileContents
       summary: Set the contents of a file
@@ -117,7 +86,7 @@ paths:
             type: string
           required: true
           description: The name of the project.
-        - in: path
+        - in: query
           name: filename
           schema:
             type: string
@@ -133,6 +102,32 @@ paths:
         "200":
           description: OK
 
+    put:
+      operationId: editFile
+      summary: Edit a file
+      parameters:
+        - in: path
+          name: project
+          schema:
+            type: string
+          required: true
+          description: The name of the project.
+        - in: query
+          name: filename
+          schema:
+            type: string
+          required: true
+          description: The name of the file.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/editFileRequest'
+      responses:
+        "200":
+          description: OK
+
 components:
   schemas:
     getFilesResponse:
@@ -143,15 +138,6 @@ components:
           items:
             type: string
           description: The list of files.
-
-    getFileRequest:
-      type: object
-      required:
-        - filename
-      properties:
-        filename:
-          type: string
-          description: The name of the file to get.
 
     getFileResponse:
       type: object
@@ -167,45 +153,30 @@ components:
           description: The creation date of the file.
         contents:
           type: array
-          description: 'The contents of the file, each line is prepended with a line number in the format of "line_number: line_content".'
+          description: |
+            'The contents of the file, each line is prepended with a line number in the format of "line_number: line_content".'
+            The line numbers should be shown only if explicitly requested.
           items:
             type: string
 
     editFileRequest:
       type: object
       required:
-        - filename
         - first_line
         - last_line
         - content
       properties:
-        filename:
-          type: string
-          description: The name of the file to edit.
         first_line:
           type: integer
-          description: The first line to edit.
+          description: The first line of the replaced block in the original file.
         last_line:
           type: integer
-          description: The last line to edit.
+          description: The last line of the replaced block in the original file.
         content:
           type: array
           description: The content to replace the lines with.
           items:
             type: string
-
-    patchFileRequest:
-      type: object
-      required:
-        - filename
-        - patch
-      properties:
-        filename:
-          type: string
-          description: The name of the file to patch.
-        patch:
-          type: string
-          description: The patch to apply to the file.
 
     setFileContentsRequest:
       type: object
@@ -213,5 +184,7 @@ components:
         - contents
       properties:
         contents:
-          type: string
+          type: array
           description: The contents of the file.
+          items:
+            type: string
