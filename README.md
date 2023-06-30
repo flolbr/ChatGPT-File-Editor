@@ -53,3 +53,37 @@ Renaming and deleting does not affect the files on disk, only the `projects.yaml
 
 Files can be excluded from the File Editor by adding a `.gpteditignore` file to the project directory.
 The format of the `.gpteditignore` file is the same as the `.gitignore` file.
+
+## Q & A
+
+### How does this defer from GitHub Copilot ?
+
+Copilot allows you to edit files on the fly, but it does not allow you to create new files or to list the files in a directory.
+This plugin is able to know which files to edit based on your request.
+
+### Is this only for code projects ?
+
+No, this plugin can be used for any type of project.
+I personally use it for slideshow presentations made with Beamer or Reveal.js.
+
+### How do I add a new file ?
+
+You can add a new file by asking a question like "Create a new file called `file_name`".
+
+### How do I edit a file ?
+
+You can edit a file by asking a question like "Edit `file_name`".
+
+### How do I list all the files in the project ?
+
+You can list all the files in the project by asking a question like "What files are in the project ?".
+
+### How do I list all the files in a directory ?
+
+You can list all the files in a directory by asking a question like "What files are in the `directory_name` directory ?".
+
+### How do I delete a file ?
+
+You can't delete files.
+This is to prevent accidental deletion of files.
+Maybe this will be added as an opt-in feature in the future.
