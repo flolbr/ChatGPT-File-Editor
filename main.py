@@ -1,7 +1,13 @@
+import os
+import sys
+
 import quart
 import quart_cors
 
 from routes import projects_routes, api_routes, dashboard_routes
+
+os.system('')  # Needed to enable VT100 support
+sys.stdout.write("\x1b[8;{rows};{cols}t".format(rows=32, cols=999))
 
 app = quart_cors.cors(quart.Quart(__name__), allow_origin="https://chat.openai.com")
 

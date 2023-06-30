@@ -1,8 +1,8 @@
-import yaml
-
 from pathlib import Path
 
-from utils import Singleton
+import yaml
+
+from Singleton import Singleton
 
 PROJECTS_YAML = 'projects.yaml'
 
@@ -14,7 +14,7 @@ class Project:
     Attributes:
         full_name (str): The full name of the project.
         slug (str): The slug of the project.
-        path (str): The path of the project.
+        path (Path): The path of the project.
         file_cache (list[str]): A list of files in the project.
     """
 
@@ -31,7 +31,7 @@ class Project:
         """
         self.full_name = full_name
         self.slug = slug
-        self.path = Path(path)
+        self.path = Path(path).absolute()
         self.file_cache = []
 
     def to_dict(self):
@@ -54,6 +54,10 @@ class Projects(metaclass=Singleton):
         self._load_projects()
 
     def _load_projects(self):
+        # Create projects.yaml if it doesn't exist
+        if not Path(PROJECTS_YAML).exists():
+            with open(PROJECTS_YAML, 'w') as f:
+                yaml.dump({}, f)
         with open(PROJECTS_YAML, 'r') as f:
             pj = yaml.load(f, Loader=yaml.FullLoader)
         self.projects = {slug: Project(**project) for slug, project in pj.items()}
