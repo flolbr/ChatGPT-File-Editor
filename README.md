@@ -38,10 +38,11 @@ The plugin should now be installed and enabled! You can start with a question li
 ### Manually adding projects
 
 The directories accessible by ChatGPT File Editor are stored in the [projects.yaml](projects.yaml) file.
+
 To add a new project, add a new entry to the `projects` list.
-The `full_name` field is the name of the project that will be displayed in the File Editor.
-The `path` field is the path to the directory that contains the files for the project.
-The `slug` field is the name of the project that will be used in the URL for the File Editor.
+- The `full_name` field is the name of the project that will be displayed in the File Editor.
+- The `path` field is the path to the directory that contains the files for the project.
+- The `slug` field is the name of the project that will be used in the URL for the File Editor.
 
 ### Using the dashboard
 
