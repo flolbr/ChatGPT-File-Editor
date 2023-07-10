@@ -68,6 +68,13 @@ paths:
             type: string
           required: true
           description: The name of the file.
+        - name: next_line
+          in: query
+          schema:
+            type: integer
+            default: 0
+          required: false
+          description: The line number to start from.
       responses:
         "200":
           description: OK

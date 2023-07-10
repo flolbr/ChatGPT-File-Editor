@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 import quart
 from quart import Blueprint
@@ -35,6 +36,9 @@ async def get_files(project_name):
     return quart.Response(response=json.dumps(project.file_cache), status=200)
 
 
+CHUNK_SIZE = 20_000
+
+
 @projects_routes.get("/projects/<string:project>/file")
 async def get_file(project):
     """
@@ -55,22 +59,33 @@ async def get_file(project):
             "error": f"Project {project} not found",
         }), status=404)
 
-    file = projects[project].path / filename
+    file: Path = projects[project].path / filename
 
     if not file.exists():
         return quart.Response(response=json.dumps({
             "error": f"File {filename} not found",
         }), status=404)
 
-    contents = file.read_text().splitlines()
+    next_line = int(quart.request.args.get("next_line", 0))
+
+    lines = file.read_text().splitlines()
+    contents = lines[next_line:]
+
+    nb_chars = 0
+    for i, line in enumerate(contents):
+        nb_chars += len(line) + 1
+        if nb_chars > CHUNK_SIZE:
+            contents = contents[:i]
+            break
 
     # Add a line number to each line
-    contents = [f"{i + 1}: {line}" for i, line in enumerate(contents)]
+    contents = [f"{i + next_line + 1}: {line}" for i, line in enumerate(contents)]
 
     return quart.Response(response=json.dumps({
         "full_path": str(file.absolute()),
         "last_modified": file.stat().st_mtime,
         "created": file.stat().st_ctime,
+        "nb_lines": len(lines),
         "contents": contents,
     }), status=200)
 
